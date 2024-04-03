@@ -1,6 +1,6 @@
 #![allow(clippy::large_enum_variant)]
 
-use opentelemetry::trace::SpanContext;
+use opentelemetry::Context;
 use serde::{de::MapAccess, Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
@@ -15,7 +15,7 @@ use crate::types::{
 ///
 /// [object]: https://core.telegram.org/bots/api#available-types
 #[serde_with_macros::skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Update {
     /// The update‘s unique identifier. Update identifiers start from a certain
     /// positive number and increase sequentially. This ID becomes especially
@@ -31,7 +31,13 @@ pub struct Update {
     pub kind: UpdateKind,
 
     #[serde(skip)]
-    pub cx: Option<SpanContext>,
+    pub cx: Option<Context>,
+}
+
+impl PartialEq for Update {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.kind == other.kind
+    }
 }
 
 /// An identifier of a telegram update.
