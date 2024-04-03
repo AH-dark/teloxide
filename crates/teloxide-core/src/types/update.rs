@@ -1,4 +1,6 @@
 #![allow(clippy::large_enum_variant)]
+
+use opentelemetry::trace::SpanContext;
 use serde::{de::MapAccess, Deserialize, Serialize, Serializer};
 use serde_json::Value;
 
@@ -27,6 +29,9 @@ pub struct Update {
 
     #[serde(flatten)]
     pub kind: UpdateKind,
+
+    #[serde(skip)]
+    pub cx: Option<SpanContext>,
 }
 
 /// An identifier of a telegram update.
@@ -154,7 +159,7 @@ impl Update {
     /// Note that this function may return quite a few users as it scans
     /// replies, pinned messages, message entities, "via bot" fields and more.
     /// Also note that this function can return duplicate users.
-    pub fn mentioned_users(&self) -> impl Iterator<Item = &User> {
+    pub fn mentioned_users(&self) -> impl Iterator<Item=&User> {
         use either::Either::{Left as L, Right as R};
         use std::iter::{empty, once};
 
@@ -247,8 +252,8 @@ impl UpdateId {
 
 impl<'de> Deserialize<'de> for UpdateKind {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
+        where
+            D: serde::Deserializer<'de>,
     {
         struct Visitor;
 
@@ -260,8 +265,8 @@ impl<'de> Deserialize<'de> for UpdateKind {
             }
 
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: MapAccess<'de>,
+                where
+                    A: MapAccess<'de>,
             {
                 let mut tmp = None;
 
@@ -333,8 +338,8 @@ impl<'de> Deserialize<'de> for UpdateKind {
 
 impl Serialize for UpdateKind {
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         let name = "UpdateKind";
         match self {
@@ -379,12 +384,12 @@ fn empty_error() -> UpdateKind {
 
 #[cfg(test)]
 mod test {
+    use chrono::DateTime;
+
     use crate::types::{
         Chat, ChatId, ChatKind, ChatPrivate, MediaKind, MediaText, Message, MessageCommon,
         MessageId, MessageKind, Update, UpdateId, UpdateKind, User, UserId,
     };
-
-    use chrono::DateTime;
 
     // TODO: more tests for deserialization
     #[test]
@@ -464,6 +469,7 @@ mod test {
                     has_protected_content: false,
                 }),
             }),
+            cx: None,
         };
 
         let actual = serde_json::from_str::<Update>(json).unwrap();

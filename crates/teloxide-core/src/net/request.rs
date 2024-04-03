@@ -221,7 +221,7 @@ mod tests {
         .to_owned();
 
         let res = deserialize_response::<Vec<Update>>(json).unwrap();
-        assert_matches!(res, [Update { id: UpdateId(0), kind: UpdateKind::PollAnswer(_) }]);
+        assert_matches!(res, [Update { id: UpdateId(0), kind: UpdateKind::PollAnswer(_), cx: None }]);
     }
 
     /// Check that `get_updates` can work with malformed updates.
@@ -262,10 +262,10 @@ mod tests {
         assert_matches!(
             res,
             [
-                Update { id: UpdateId(0), kind: UpdateKind::PollAnswer(_) },
-                Update { id: UpdateId(1), kind: UpdateKind::Error(v) } if v.is_object(),
-                Update { id: UpdateId(2), kind: UpdateKind::PollAnswer(_) },
-                Update { id: UpdateId(3), kind: UpdateKind::Error(v) } if v.is_object(),
+                Update { id: UpdateId(0), kind: UpdateKind::PollAnswer(_), cx: None },
+                Update { id: UpdateId(1), kind: UpdateKind::Error(v), cx: None } if v.is_object(),
+                Update { id: UpdateId(2), kind: UpdateKind::PollAnswer(_), cx: None },
+                Update { id: UpdateId(3), kind: UpdateKind::Error(v), cx: None } if v.is_object(),
             ]
         );
     }
